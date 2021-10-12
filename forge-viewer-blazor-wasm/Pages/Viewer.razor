@@ -1,0 +1,46 @@
+﻿@page "/viewer"
+@using System.Collections.Generic
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<h1>Viewer</h1>
+
+<p>This component demonstrates using the Forge Viewer in a Blazor WebAssembly project.</p>
+
+@if (token == null)
+{
+  <p><em>Loading...</em></p>
+}
+else
+{
+  <div id="forgeViewer" style="width: 800px; height: 400px; position: relative"></div>
+}
+
+@code {
+  private TokenResponse token;
+
+  protected override async Task OnInitializedAsync()
+  {
+    var dict = new Dictionary<string, string>();
+    dict.Add("client_id", "<client id>>");
+    dict.Add("client_secret", "<client secret>");
+    dict.Add("grant_type", "client_credentials");
+    dict.Add("scope", "viewables:read");
+    // This should be done on the server instead of the client-side code!!!
+    var response = await Http.PostAsync(
+      "https://developer.api.autodesk.com/authentication/v1/authenticate", 
+      new FormUrlEncodedContent(dict)
+    );
+
+    token = await response.Content.ReadAsAsync<TokenResponse>();
+    await JSRuntime.InvokeVoidAsync(
+      "launchViewer", 
+      "dXJuO...",
+      token.access_token
+    );
+  }
+
+  public class TokenResponse {
+    public string access_token; 
+  }
+}
